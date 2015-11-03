@@ -1,0 +1,5 @@
+CREATE TABLE VersionInfo (SchemaVersion INTEGER);
+INSERT INTO VersionInfo (SchemaVersion) VALUES(1);
+
+CREATE TABLE Users (ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, Key TEXT, Name TEXT, Email TEXT, Password TEXT);
+
