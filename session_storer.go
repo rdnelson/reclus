@@ -24,6 +24,7 @@ type SessionStore struct {
 func InitializeSessionStore(config *Config) error {
 	if config.Security.SessionStoreKey == "" {
 		config.Security.SessionStoreKey = base64.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(64))
+		log.Debugf("Generated Session Store Key: '%s'", config.Security.SessionStoreKey)
 	}
 
 	key, err := base64.StdEncoding.DecodeString(config.Security.SessionStoreKey)
@@ -51,6 +52,7 @@ func (s SessionStore) Get(key string) (string, bool) {
 	strInf, ok := session.Values[key]
 
 	if !ok {
+		log.Debugf("Failed to find data in sessionStore for key '%s'", key)
 		return "", false
 	}
 
@@ -66,6 +68,7 @@ func (s SessionStore) Put(key, value string) {
 		return
 	}
 
+	log.Debugf("Saving data to sessionStore for key '%s'='%s'", key, value)
 	session.Values[key] = value
 	session.Save(s.request, s.writer)
 }

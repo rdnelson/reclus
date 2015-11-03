@@ -20,6 +20,7 @@ type CookieStore struct {
 func InitializeCookieStore(config *Config) error {
 	if config.Security.CookieStoreKey == "" {
 		config.Security.CookieStoreKey = base64.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(64))
+		log.Debugf("Generated Cookie Store Key: '%s'", config.Security.CookieStoreKey)
 	}
 
 	key, err := base64.StdEncoding.DecodeString(config.Security.CookieStoreKey)

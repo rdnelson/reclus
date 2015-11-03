@@ -68,6 +68,16 @@ func main() {
 	mux := mux.NewRouter()
 
 	mux.PathPrefix("/auth").Handler(authManager.NewRouter())
+	mux.Handle("/", authProtect(loggedIn))
 
 	http.ListenAndServe(":9090", mux)
+}
+
+func loggedIn(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	rawUser, _ := authManager.CurrentUser(w, r)
+	log.Debugf("Logged in as user: %v", rawUser)
+	user, _ := rawUser.(*User)
+
+	w.Write([]byte(user.Email))
 }

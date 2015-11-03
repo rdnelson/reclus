@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/davecgh/go-spew/spew"
 	"gopkg.in/authboss.v0"
 )
 
@@ -71,9 +70,6 @@ func (s UserRepo) Get(key string) (interface{}, error) {
 	} else if userCount != 1 {
 		return nil, errors.New("Invalid number of hits returned")
 	}
-
-	log.Debugf("Found matching user: %v", user)
-	spew.Dump(user)
 
 	return &user, nil
 }
