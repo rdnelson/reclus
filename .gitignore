@@ -19,6 +19,14 @@ _cgo_export.*
 
 _testmain.go
 
+reclus
 *.exe
 *.test
 *.prof
+
+# Vim files
+*.swo
+*.swp
+
+# Database files
+db/*
