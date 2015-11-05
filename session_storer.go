@@ -24,8 +24,9 @@ type SessionStore struct {
 func InitializeSessionStore(config *Config) error {
 	if config.Security.SessionStoreKey == "" {
 		config.Security.SessionStoreKey = base64.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(64))
-		log.Debugf("Generated Session Store Key: '%s'", config.Security.SessionStoreKey)
 	}
+
+	log.Debugf("Session Store Key: '%s'", config.Security.SessionStoreKey)
 
 	key, err := base64.StdEncoding.DecodeString(config.Security.SessionStoreKey)
 

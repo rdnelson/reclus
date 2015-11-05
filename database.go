@@ -1,99 +1,55 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
-	"io/ioutil"
-	"strings"
 )
 
-const (
-	SchemaTable = "VersionInfo"
+type Database interface {
+	// Database management functions
+	Open() error
+	Create() error
+	ValidateSchema() error
+	PopulateSchema() error
+	Close() error
 
-	SchemaQuery = "SELECT SchemaVersion FROM VersionInfo"
-	ProbeQuery  = "SELECT 1 FROM %s"
-)
+	// User Management Functions
+	GetUser(key string) (*User, error)
+	AddUser(key string, user *User) error
+	UpdateUser(key string, user *User) error
+}
 
-func setupDatabase(config *Config) (db *sql.DB, err error) {
-
+func NewDatabase(config *Config) (db Database, err error) {
 	switch config.Database.Backend {
 	case SQLite3:
-		db, err = setupSqlite3DB(config)
 
-		if err != nil {
-			return
+		if err := config.SQLite3.Validate(); err != nil {
+			return nil, err
 		}
 
+		db = &SQLite3Database{config.SQLite3.Path, nil}
+		break
+
 	default:
-		return nil, fmt.Errorf("Unknown backend '%s', failed to create DB.", config.Database.Backend)
+		return nil, fmt.Errorf("Unexpected database backend: '%s'\n", config.Database.Backend)
 	}
 
-	if !probeTable(db, SchemaTable) {
-		err = populateDatabase(db)
+	if err := db.Open(); err != nil {
+		return nil, err
+	}
 
-		if err != nil {
+	log.Debugf("Database: '%v'", db)
+
+	if err := db.ValidateSchema(); err != nil {
+		if err := db.PopulateSchema(); err != nil {
 			db.Close()
 			return nil, err
 		}
 	}
 
-	_, err = checkSchema(db)
-
-	if err != nil {
+	if err := db.ValidateSchema(); err != nil {
 		db.Close()
-
-		log.Fatal(err)
+		return nil, err
 	}
 
-	return db, err
-}
-
-func checkSchema(db *sql.DB) (int, error) {
-	row := db.QueryRow(SchemaQuery)
-
-	var version int
-
-	if err := row.Scan(&version); err != nil {
-		return 0, err
-	}
-
-	return version, nil
-}
-
-func probeTable(db *sql.DB, table string) bool {
-	_, err := db.Exec(fmt.Sprintf(ProbeQuery, table))
-
-	return err == nil
-}
-
-func populateDatabase(db *sql.DB) error {
-
-	bytes, err := ioutil.ReadFile("sql/schema.sql")
-
-	if err != nil {
-		return err
-	}
-
-	str := string(bytes)
-	sqlCmds := strings.Split(str, ";\r")
-
-	tx, err := db.Begin()
-
-	if err != nil {
-		return err
-	}
-
-	defer tx.Rollback()
-
-	for _, q := range sqlCmds {
-		_, err := tx.Exec(q)
-
-		if err != nil {
-			return err
-		}
-	}
-
-	err = tx.Commit()
-
-	return err
+	return db, nil
 }

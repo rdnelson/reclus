@@ -13,6 +13,7 @@ const (
 )
 
 type Config struct {
+	Server   ServerConfig
 	Database DBConfig
 	Security SecurityConfig
 	SQLite3  SQLiteConfig
@@ -29,7 +30,15 @@ func loadConfig(config *Config) error {
 }
 
 func validateConfig(config *Config) error {
-	if err := validateDatabase(config); err != nil {
+	if err := config.Server.Validate(); err != nil {
+		return err
+	}
+
+	if err := config.Database.Validate(); err != nil {
+		return err
+	}
+
+	if err := config.Security.Validate(); err != nil {
 		return err
 	}
 

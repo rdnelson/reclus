@@ -1,9 +1,6 @@
 package main
 
 import (
-	"database/sql"
-	"errors"
-
 	"gopkg.in/authboss.v0"
 )
 
@@ -15,16 +12,11 @@ type User struct {
 	Password string
 }
 
-const (
-	InsertQuery = "INSERT INTO Users (Key, Email, Password, Name) VALUES ($1, $2, $3, $4)"
-	SelectQuery = "SELECT ID, Email, Password, Name FROM Users WHERE Key = $1"
-)
-
 type UserRepo struct {
-	db *sql.DB
+	db Database
 }
 
-func NewUserRepo(db *sql.DB) *UserRepo {
+func NewUserRepo(db Database) *UserRepo {
 	return &UserRepo{db}
 }
 
@@ -36,42 +28,23 @@ func (s UserRepo) Put(key string, attr authboss.Attributes) error {
 		return err
 	}
 
-	_, err := s.db.Exec(InsertQuery, key, user.Email, user.Password, user.Name)
-
-	return err
+	return s.db.UpdateUser(key, user)
 }
 
 func (s UserRepo) Get(key string) (interface{}, error) {
-
-	user := User{}
-
 	log.Debugf("Getting entry '%s'", key)
-	rows, err := s.db.Query(SelectQuery, key)
+
+	user, err := s.db.GetUser(key)
 
 	if err != nil {
 		return nil, err
 	}
 
-	defer rows.Close()
-
-	userCount := 0
-
-	for rows.Next() {
-		userCount++
-		if err := rows.Scan(&user.ID, &user.Email, &user.Password, &user.Name); err != nil {
-			return nil, err
-		}
-	}
-
-	log.Debugf("Found '%d' matching user entries", userCount)
-
-	if userCount == 0 {
+	if user == nil {
 		return nil, authboss.ErrUserNotFound
-	} else if userCount != 1 {
-		return nil, errors.New("Invalid number of hits returned")
 	}
 
-	return &user, nil
+	return user, nil
 }
 
 func (s UserRepo) Create(key string, attr authboss.Attributes) error {
@@ -82,7 +55,5 @@ func (s UserRepo) Create(key string, attr authboss.Attributes) error {
 		return err
 	}
 
-	_, err := s.db.Exec(InsertQuery, key, user.Email, user.Password, user.Name)
-
-	return err
+	return s.db.AddUser(key, &user)
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
@@ -20,7 +19,7 @@ var (
 	log         = logrus.New()
 )
 
-func setupAuth(db *sql.DB) error {
+func setupAuth(db Database) error {
 
 	if err := InitializeCookieStore(conf); err != nil {
 		return err
@@ -35,7 +34,7 @@ func setupAuth(db *sql.DB) error {
 	authManager.CookieStoreMaker = NewCookieStore
 	authManager.MountPath = "/auth"
 	authManager.RootURL = "http://localhost:8080"
-	authManager.LogWriter = logrus.StandardLogger().Out
+	authManager.LogWriter = LogWriter{log}
 
 	authManager.XSRFName = "csrf_token"
 	authManager.XSRFMaker = func(_ http.ResponseWriter, req *http.Request) string {
@@ -53,7 +52,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	db, err := setupDatabase(conf)
+	db, err := NewDatabase(conf)
 
 	if err != nil {
 		log.Fatal(err)
@@ -76,7 +75,6 @@ func main() {
 func loggedIn(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	rawUser, _ := authManager.CurrentUser(w, r)
-	log.Debugf("Logged in as user: %v", rawUser)
 	user, _ := rawUser.(*User)
 
 	w.Write([]byte(user.Email))

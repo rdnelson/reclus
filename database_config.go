@@ -9,10 +9,6 @@ type DBConfig struct {
 	Backend string
 }
 
-type SQLiteConfig struct {
-	Path string
-}
-
 const (
 	SQLite3 = "sqlite3"
 )
@@ -21,23 +17,15 @@ var (
 	SupportedBackends = [...]string{SQLite3}
 )
 
-func validateDatabase(config *Config) error {
-	backend := strings.ToLower(config.Database.Backend)
+func (d *DBConfig) Validate() error {
+	backendName := strings.ToLower(d.Backend)
 
-	if _, err := ListContains(SupportedBackends[:], backend); err != nil {
-		return fmt.Errorf("Invalid database backend: '%s'\n", backend)
+	if _, err := ListContains(SupportedBackends[:], backendName); err != nil {
+		return fmt.Errorf("Invalid database backend: '%s'\n", backendName)
 	}
 
 	// Normalize the string
-	config.Database.Backend = backend
-
-	switch backend {
-	case SQLite3:
-		return validateSQLite3(config)
-
-	default:
-		return fmt.Errorf("Unexpected database backend: '%s'\n", config.Database.Backend)
-	}
+	d.Backend = backendName
 
 	return nil
 }
