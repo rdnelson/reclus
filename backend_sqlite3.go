@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/rdnelson/reclus/datamodel"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -136,14 +138,14 @@ func (db *SQLite3Database) probeTable(table string) bool {
 	return err == nil
 }
 
-func (s *SQLite3Database) UpdateUser(key string, user *User) error {
+func (s *SQLite3Database) UpdateUser(key string, user *datamodel.User) error {
 	_, err := s.db.Exec(UpdateQuery, key, user.Email, user.Password, user.Name)
 
 	return err
 }
 
-func (s *SQLite3Database) GetUser(key string) (*User, error) {
-	user := User{}
+func (s *SQLite3Database) GetUser(key string) (*datamodel.User, error) {
+	user := datamodel.User{}
 
 	log.Debugf("Getting entry '%s'", key)
 	rows, err := s.db.Query(SelectQuery, key)
@@ -174,7 +176,7 @@ func (s *SQLite3Database) GetUser(key string) (*User, error) {
 	return &user, nil
 }
 
-func (s *SQLite3Database) AddUser(key string, user *User) error {
+func (s *SQLite3Database) AddUser(key string, user *datamodel.User) error {
 	_, err := s.db.Exec(InsertQuery, key, user.Email, user.Password, user.Name)
 
 	return err

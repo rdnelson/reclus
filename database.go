@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/rdnelson/reclus/datamodel"
 )
 
 type Database interface {
@@ -13,9 +15,7 @@ type Database interface {
 	Close() error
 
 	// User Management Functions
-	GetUser(key string) (*User, error)
-	AddUser(key string, user *User) error
-	UpdateUser(key string, user *User) error
+	datamodel.UserRepo
 }
 
 func NewDatabase(config *Config) (db Database, err error) {

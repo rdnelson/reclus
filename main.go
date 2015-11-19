@@ -3,6 +3,8 @@ package main
 import (
 	"net/http"
 
+	"github.com/rdnelson/reclus/datamodel"
+
 	"github.com/sirupsen/logrus"
 
 	"gopkg.in/authboss.v0"
@@ -75,7 +77,7 @@ func main() {
 func loggedIn(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	rawUser, _ := authManager.CurrentUser(w, r)
-	user, _ := rawUser.(*User)
+	user, _ := rawUser.(*datamodel.User)
 
 	w.Write([]byte(user.Email))
 }
