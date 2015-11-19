@@ -30,3 +30,4 @@ reclus
 
 # Database files
 db/*
+.db/*
