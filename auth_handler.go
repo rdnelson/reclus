@@ -18,10 +18,12 @@ func authProtectGroups(f http.HandlerFunc, groups []string) authHandler {
 }
 
 func (a authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if u, err := authManager.CurrentUser(w, r); err != nil {
-		log.Warn("Failed to fetch current user: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-	} else if u == nil {
+	u, err := authManager.CurrentUser(w, r)
+	if err != nil {
+		log.Warnf("Failed to fetch current user: %v", err)
+	}
+
+	if err != nil || u == nil {
 		log.Debugf("Redirecting unauthorized user to login page. Return URL: '%s'", r.URL.String())
 
 		cookies := NewCookieStore(w, r)
