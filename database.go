@@ -6,6 +6,8 @@ import (
 	"github.com/rdnelson/reclus/datamodel"
 )
 
+var DatabaseProviders = make(map[string]func(*Config) (Database, error))
+
 type Database interface {
 	// Database management functions
 	Open() error
@@ -19,21 +21,20 @@ type Database interface {
 }
 
 func NewDatabase(config *Config) (db Database, err error) {
-	switch config.Database.Backend {
-	case SQLite3:
 
-		if err := config.SQLite3.Validate(); err != nil {
-			return nil, err
-		}
+	factory := DatabaseProviders[config.Database.Backend]
 
-		db = &SQLite3Database{config.SQLite3.Path, nil}
-		break
-
-	default:
-		return nil, fmt.Errorf("Unexpected database backend: '%s'\n", config.Database.Backend)
+	if factory == nil {
+		return nil, fmt.Errorf("Unknown database provider: %v", config.Database.Backend)
 	}
 
-	if err := db.Open(); err != nil {
+	db, err = factory(config)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if err = db.Open(); err != nil {
 		return nil, err
 	}
 

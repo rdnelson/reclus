@@ -25,6 +25,10 @@ const (
 	SelectQuery = "SELECT ID, Email, Password, Name FROM Users WHERE Key = $1"
 )
 
+const (
+	SQLite3 = "sqlite3"
+)
+
 type SQLite3Database struct {
 	path string
 	db   *sql.DB
@@ -32,6 +36,19 @@ type SQLite3Database struct {
 
 type SQLiteConfig struct {
 	Path string
+}
+
+func init() {
+	SupportedBackends = append(SupportedBackends, SQLite3)
+	DatabaseProviders[SQLite3] = NewSqlite3Db
+}
+
+func NewSqlite3Db(config *Config) (Database, error) {
+	if err := config.SQLite3.Validate(); err != nil {
+		return nil, err
+	}
+
+	return &SQLite3Database{config.SQLite3.Path, nil}, nil
 }
 
 func (s *SQLiteConfig) Validate() error {

@@ -9,12 +9,8 @@ type DBConfig struct {
 	Backend string
 }
 
-const (
-	SQLite3 = "sqlite3"
-)
-
 var (
-	SupportedBackends = [...]string{SQLite3}
+	SupportedBackends = make([]string, 0, 0)
 )
 
 func (d *DBConfig) Validate() error {
