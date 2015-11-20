@@ -5,3 +5,9 @@ type Workflow struct {
 	Name       string
 	FirstStage *WorkflowStage
 }
+
+type WorkflowRepo interface {
+	CreateWorkflow(*Workflow) (string, error)
+	GetWorkflow(string) (*Workflow, error)
+	UpdateWorkflow(string, *Workflow) error
+}
