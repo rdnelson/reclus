@@ -1,27 +1,21 @@
 package main
 
 import (
+	"github.com/rdnelson/reclus/datamodel"
+
 	"gopkg.in/authboss.v0"
 )
 
-type User struct {
-	ID   int
-	Name string
-
-	Email    string
-	Password string
-}
-
-type UserRepo struct {
+type AuthUserRepo struct {
 	db Database
 }
 
-func NewUserRepo(db Database) *UserRepo {
-	return &UserRepo{db}
+func NewUserRepo(db Database) *AuthUserRepo {
+	return &AuthUserRepo{db}
 }
 
-func (s UserRepo) Put(key string, attr authboss.Attributes) error {
-	user := &User{}
+func (s AuthUserRepo) Put(key string, attr authboss.Attributes) error {
+	user := &datamodel.User{}
 
 	log.Debugf("Putting entry '%s' with attributes: '%v'", key, attr)
 	if err := attr.Bind(user, false); err != nil {
@@ -31,7 +25,7 @@ func (s UserRepo) Put(key string, attr authboss.Attributes) error {
 	return s.db.UpdateUser(key, user)
 }
 
-func (s UserRepo) Get(key string) (interface{}, error) {
+func (s AuthUserRepo) Get(key string) (interface{}, error) {
 	log.Debugf("Getting entry '%s'", key)
 
 	user, err := s.db.GetUser(key)
@@ -47,8 +41,8 @@ func (s UserRepo) Get(key string) (interface{}, error) {
 	return user, nil
 }
 
-func (s UserRepo) Create(key string, attr authboss.Attributes) error {
-	var user User
+func (s AuthUserRepo) Create(key string, attr authboss.Attributes) error {
+	var user datamodel.User
 
 	log.Debugf("Creating entry '%s' with attributes: '%v'", key, attr)
 	if err := attr.Bind(&user, true); err != nil {
