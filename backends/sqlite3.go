@@ -1,4 +1,4 @@
-package main
+package backends
 
 import (
 	"database/sql"
@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/rdnelson/reclus/config"
 	"github.com/rdnelson/reclus/datamodel"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -39,16 +40,15 @@ type SQLiteConfig struct {
 }
 
 func init() {
-	SupportedBackends = append(SupportedBackends, SQLite3)
+	config.RegisterDbBackend(SQLite3, &SQLiteConfig{}, func(cfg interface{}) error {
+		return cfg.(*SQLiteConfig).Validate()
+	})
+
 	DatabaseProviders[SQLite3] = NewSqlite3Db
 }
 
-func NewSqlite3Db(config *Config) (Database, error) {
-	if err := config.SQLite3.Validate(); err != nil {
-		return nil, err
-	}
-
-	return &SQLite3Database{config.SQLite3.Path, nil}, nil
+func NewSqlite3Db() (Database, error) {
+	return &SQLite3Database{config.Cfg.Backend[SQLite3].(*SQLiteConfig).Path, nil}, nil
 }
 
 func (s *SQLiteConfig) Validate() error {
@@ -64,8 +64,6 @@ func (s *SQLiteConfig) Validate() error {
 }
 
 func (db *SQLite3Database) Open() (err error) {
-	log.Debugf("Opening database: '%s'", db.path)
-
 	if _, err := os.Stat(db.path); os.IsNotExist(err) {
 		err = db.Create()
 
@@ -84,8 +82,6 @@ func (db *SQLite3Database) Open() (err error) {
 }
 
 func (db *SQLite3Database) Create() error {
-	log.Debugf("Creating sqlite file: '%s'", db.path)
-
 	dbPath := db.path
 	dbDir := filepath.Dir(dbPath)
 
@@ -164,7 +160,6 @@ func (s *SQLite3Database) UpdateUser(key string, user *datamodel.User) error {
 func (s *SQLite3Database) GetUser(key string) (*datamodel.User, error) {
 	user := datamodel.User{}
 
-	log.Debugf("Getting entry '%s'", key)
 	rows, err := s.db.Query(SelectQuery, key)
 
 	if err != nil {
@@ -181,8 +176,6 @@ func (s *SQLite3Database) GetUser(key string) (*datamodel.User, error) {
 			return nil, err
 		}
 	}
-
-	log.Debugf("Found '%d' matching user entries", userCount)
 
 	if userCount == 0 {
 		return nil, nil

@@ -8,6 +8,9 @@ import (
 	"github.com/gorilla/sessions"
 
 	"gopkg.in/authboss.v0"
+
+	"github.com/rdnelson/reclus/config"
+	"github.com/rdnelson/reclus/log"
 )
 
 const SessionCookieName = "reclus_session"
@@ -21,14 +24,14 @@ type SessionStore struct {
 	request *http.Request
 }
 
-func InitializeSessionStore(config *Config) error {
-	if config.Security.SessionStoreKey == "" {
-		config.Security.SessionStoreKey = base64.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(64))
+func InitializeSessionStore() error {
+	if config.Cfg.Security.SessionStoreKey == "" {
+		config.Cfg.Security.SessionStoreKey = base64.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(64))
 	}
 
-	log.Debugf("Session Store Key: '%s'", config.Security.SessionStoreKey)
+	log.Log.Debugf("Session Store Key: '%s'", config.Cfg.Security.SessionStoreKey)
 
-	key, err := base64.StdEncoding.DecodeString(config.Security.SessionStoreKey)
+	key, err := base64.StdEncoding.DecodeString(config.Cfg.Security.SessionStoreKey)
 
 	if err != nil {
 		return err
@@ -53,7 +56,7 @@ func (s SessionStore) Get(key string) (string, bool) {
 	strInf, ok := session.Values[key]
 
 	if !ok {
-		log.Debugf("Failed to find data in sessionStore for key '%s'", key)
+		log.Log.Debugf("Failed to find data in sessionStore for key '%s'", key)
 		return "", false
 	}
 
@@ -69,7 +72,7 @@ func (s SessionStore) Put(key, value string) {
 		return
 	}
 
-	log.Debugf("Saving data to sessionStore for key '%s'='%s'", key, value)
+	log.Log.Debugf("Saving data to sessionStore for key '%s'='%s'", key, value)
 	session.Values[key] = value
 	session.Save(s.request, s.writer)
 }

@@ -1,23 +1,25 @@
 package main
 
 import (
+	"github.com/rdnelson/reclus/backends"
 	"github.com/rdnelson/reclus/datamodel"
+	"github.com/rdnelson/reclus/log"
 
 	"gopkg.in/authboss.v0"
 )
 
 type AuthUserRepo struct {
-	db Database
+	db backends.Database
 }
 
-func NewUserRepo(db Database) *AuthUserRepo {
+func NewUserRepo(db backends.Database) *AuthUserRepo {
 	return &AuthUserRepo{db}
 }
 
 func (s AuthUserRepo) Put(key string, attr authboss.Attributes) error {
 	user := &datamodel.User{}
 
-	log.Debugf("Putting entry '%s' with attributes: '%v'", key, attr)
+	log.Log.Debugf("Putting entry '%s' with attributes: '%v'", key, attr)
 	if err := attr.Bind(user, false); err != nil {
 		return err
 	}
@@ -26,7 +28,7 @@ func (s AuthUserRepo) Put(key string, attr authboss.Attributes) error {
 }
 
 func (s AuthUserRepo) Get(key string) (interface{}, error) {
-	log.Debugf("Getting entry '%s'", key)
+	log.Log.Debugf("Getting entry '%s'", key)
 
 	user, err := s.db.GetUser(key)
 
@@ -44,7 +46,7 @@ func (s AuthUserRepo) Get(key string) (interface{}, error) {
 func (s AuthUserRepo) Create(key string, attr authboss.Attributes) error {
 	var user datamodel.User
 
-	log.Debugf("Creating entry '%s' with attributes: '%v'", key, attr)
+	log.Log.Debugf("Creating entry '%s' with attributes: '%v'", key, attr)
 	if err := attr.Bind(&user, true); err != nil {
 		return err
 	}

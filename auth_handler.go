@@ -2,6 +2,8 @@ package main
 
 import (
 	"net/http"
+
+	"github.com/rdnelson/reclus/log"
 )
 
 type authHandler struct {
@@ -20,16 +22,16 @@ func authProtectGroups(f http.HandlerFunc, groups []string) authHandler {
 func (a authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	u, err := authManager.CurrentUser(w, r)
 	if err != nil {
-		log.Warnf("Failed to fetch current user: %v", err)
+		log.Log.Warnf("Failed to fetch current user: %v", err)
 	}
 
 	if err != nil || u == nil {
-		log.Debugf("Redirecting unauthorized user to login page. Return URL: '%s'", r.URL.String())
+		log.Log.Debugf("Redirecting unauthorized user to log.Login page. Return URL: '%s'", r.URL.String())
 
 		cookies := NewCookieStore(w, r)
 		cookies.Put("return_url", r.URL.String())
 
-		http.Redirect(w, r, "/auth/login", http.StatusFound)
+		http.Redirect(w, r, "/auth/log.Login", http.StatusFound)
 	} else {
 		a.handler(w, r)
 	}

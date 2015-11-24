@@ -1,4 +1,4 @@
-package main
+package log
 
 import (
 	"strings"
@@ -7,11 +7,11 @@ import (
 )
 
 type LogWriter struct {
-	logger *logrus.Logger
+	Logger *logrus.Logger
 }
 
 func (l LogWriter) Write(data []byte) (int, error) {
-	l.logger.Info(strings.TrimSpace(string(data)))
+	l.Logger.Info(strings.TrimSpace(string(data)))
 
 	return len(data), nil
 }

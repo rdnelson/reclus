@@ -1,12 +1,14 @@
-package main
+package backends
 
 import (
 	"fmt"
 
+	"github.com/rdnelson/reclus/config"
 	"github.com/rdnelson/reclus/datamodel"
+	"github.com/rdnelson/reclus/log"
 )
 
-var DatabaseProviders = make(map[string]func(*Config) (Database, error))
+var DatabaseProviders = make(map[string]func() (Database, error))
 
 type Database interface {
 	// Database management functions
@@ -20,15 +22,14 @@ type Database interface {
 	datamodel.UserRepo
 }
 
-func NewDatabase(config *Config) (db Database, err error) {
-
-	factory := DatabaseProviders[config.Database.Backend]
+func NewDatabase() (db Database, err error) {
+	factory := DatabaseProviders[config.Cfg.Database.Backend]
 
 	if factory == nil {
-		return nil, fmt.Errorf("Unknown database provider: %v", config.Database.Backend)
+		return nil, fmt.Errorf("Unknown database provider: %v", config.Cfg.Database.Backend)
 	}
 
-	db, err = factory(config)
+	db, err = factory()
 
 	if err != nil {
 		return nil, err
@@ -38,7 +39,7 @@ func NewDatabase(config *Config) (db Database, err error) {
 		return nil, err
 	}
 
-	log.Debugf("Database: '%v'", db)
+	log.Log.Debugf("Database: '%v'", db)
 
 	if err := db.ValidateSchema(); err != nil {
 		if err := db.PopulateSchema(); err != nil {

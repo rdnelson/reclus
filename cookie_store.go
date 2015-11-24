@@ -8,6 +8,9 @@ import (
 	"github.com/gorilla/securecookie"
 
 	"gopkg.in/authboss.v0"
+
+	"github.com/rdnelson/reclus/config"
+	"github.com/rdnelson/reclus/log"
 )
 
 var cookieStore *securecookie.SecureCookie
@@ -17,13 +20,13 @@ type CookieStore struct {
 	request *http.Request
 }
 
-func InitializeCookieStore(config *Config) error {
-	if config.Security.CookieStoreKey == "" {
-		config.Security.CookieStoreKey = base64.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(64))
-		log.Debugf("Generated Cookie Store Key: '%s'", config.Security.CookieStoreKey)
+func InitializeCookieStore() error {
+	if config.Cfg.Security.CookieStoreKey == "" {
+		config.Cfg.Security.CookieStoreKey = base64.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(64))
+		log.Log.Debugf("Generated Cookie Store Key: '%s'", config.Cfg.Security.CookieStoreKey)
 	}
 
-	key, err := base64.StdEncoding.DecodeString(config.Security.CookieStoreKey)
+	key, err := base64.StdEncoding.DecodeString(config.Cfg.Security.CookieStoreKey)
 
 	if err != nil {
 		return err

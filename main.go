@@ -3,9 +3,10 @@ package main
 import (
 	"net/http"
 
+	"github.com/rdnelson/reclus/backends"
+	"github.com/rdnelson/reclus/config"
 	"github.com/rdnelson/reclus/datamodel"
-
-	"github.com/sirupsen/logrus"
+	"github.com/rdnelson/reclus/log"
 
 	"gopkg.in/authboss.v0"
 	_ "gopkg.in/authboss.v0/auth"
@@ -17,17 +18,15 @@ import (
 
 var (
 	authManager = authboss.New()
-	conf        = &Config{}
-	log         = logrus.New()
 )
 
-func setupAuth(db Database) error {
+func setupAuth(db backends.Database) error {
 
-	if err := InitializeCookieStore(conf); err != nil {
+	if err := InitializeCookieStore(); err != nil {
 		return err
 	}
 
-	if err := InitializeSessionStore(conf); err != nil {
+	if err := InitializeSessionStore(); err != nil {
 		return err
 	}
 
@@ -36,7 +35,7 @@ func setupAuth(db Database) error {
 	authManager.CookieStoreMaker = NewCookieStore
 	authManager.MountPath = "/auth"
 	authManager.RootURL = "http://localhost:8080"
-	authManager.LogWriter = LogWriter{log}
+	authManager.LogWriter = log.LogWriter{log.Log}
 
 	authManager.XSRFName = "csrf_token"
 	authManager.XSRFMaker = func(_ http.ResponseWriter, req *http.Request) string {
@@ -47,23 +46,23 @@ func setupAuth(db Database) error {
 }
 
 func main() {
-	log.Level = logrus.DebugLevel
-	log.Print("Starting Reclus Issue Tracker...")
+	log.Log.Level = log.DebugLevel
+	log.Log.Print("Starting Reclus Issue Tracker...")
 
-	if err := loadConfig(conf); err != nil {
-		log.Fatal(err)
+	if err := config.Load(); err != nil {
+		log.Log.Fatal(err)
 	}
 
-	db, err := NewDatabase(conf)
+	db, err := backends.NewDatabase()
 
 	if err != nil {
-		log.Fatal(err)
+		log.Log.Fatal(err)
 	}
 
 	defer db.Close()
 
 	if err = setupAuth(db); err != nil {
-		log.Fatal(err)
+		log.Log.Fatal(err)
 	}
 
 	mux := mux.NewRouter()
