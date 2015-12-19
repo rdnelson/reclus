@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/rdnelson/reclus/backends"
@@ -70,7 +71,9 @@ func main() {
 	mux.PathPrefix("/auth").Handler(authManager.NewRouter())
 	mux.Handle("/", authProtect(loggedIn, false))
 
-	http.ListenAndServe(":9090", mux)
+	log.Log.Print("Starting HTTP server")
+
+	log.Log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", config.Cfg.Server.Hostname, config.Cfg.Server.Port), mux))
 }
 
 func loggedIn(w http.ResponseWriter, r *http.Request, user *datamodel.User) {

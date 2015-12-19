@@ -3,7 +3,8 @@ package config
 import "fmt"
 
 type ServerConfig struct {
-	Port int
+	Hostname string
+	Port     int
 }
 
 func (s ServerConfig) Validate() error {
