@@ -29,8 +29,6 @@ func InitializeSessionStore() error {
 		config.Cfg.Security.SessionStoreKey = base64.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(64))
 	}
 
-	log.Log.Debugf("Session Store Key: '%s'", config.Cfg.Security.SessionStoreKey)
-
 	key, err := base64.StdEncoding.DecodeString(config.Cfg.Security.SessionStoreKey)
 
 	if err != nil {

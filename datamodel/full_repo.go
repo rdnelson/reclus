@@ -1,13 +1,13 @@
 package datamodel
 
 type FullRepo interface {
-	IssueRepo
+	/*IssueRepo
 	IssueTypeRepo
 	ProjectRepo
 	ProjectIssueTypeRepo
-	StageLinkRepo
+	StageLinkRepo*/
 	UserRepo
-	WorkflowRepo
+	/*WorkflowRepo
 	WorkflowLinkRepo
-	WorkflowStageRepo
+	WorkflowStageRepo*/
 }
