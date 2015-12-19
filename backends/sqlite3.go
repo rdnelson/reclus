@@ -1,29 +1,15 @@
 package backends
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/rdnelson/reclus/config"
 	"github.com/rdnelson/reclus/datamodel"
+	"github.com/rdnelson/reclus/log"
 
+	"github.com/jinzhu/gorm"
 	_ "github.com/mattn/go-sqlite3"
-)
-
-const (
-	SchemaTable = "VersionInfo"
-
-	SchemaQuery = "SELECT SchemaVersion FROM VersionInfo"
-	ProbeQuery  = "SELECT 1 FROM %s"
-
-	UpdateQuery = "UPDATE Users SET (Email, Password, Name) VALUES ($2, $3, $4) WHERE Key = $1"
-	InsertQuery = "INSERT INTO Users (Key, Email, Password, Name) VALUES ($1, $2, $3, $4)"
-	SelectQuery = "SELECT ID, Email, Password, Name FROM Users WHERE Key = $1"
 )
 
 const (
@@ -32,7 +18,7 @@ const (
 
 type SQLite3Database struct {
 	path string
-	db   *sql.DB
+	db   gorm.DB
 }
 
 type SQLiteConfig struct {
@@ -48,7 +34,7 @@ func init() {
 }
 
 func NewSqlite3Db() (Database, error) {
-	return &SQLite3Database{config.Cfg.Backend[SQLite3].(*SQLiteConfig).Path, nil}, nil
+	return &SQLite3Database{config.Cfg.Backend[SQLite3].(*SQLiteConfig).Path, gorm.DB{}}, nil
 }
 
 func (s *SQLiteConfig) Validate() error {
@@ -63,131 +49,56 @@ func (s *SQLiteConfig) Validate() error {
 	return nil
 }
 
+func (db *SQLite3Database) MigrateSchema() error {
+	db.db.AutoMigrate(&datamodel.User{})
+
+	return nil
+}
+
 func (db *SQLite3Database) Open() (err error) {
-	if _, err := os.Stat(db.path); os.IsNotExist(err) {
-		err = db.Create()
+	db.db, err = gorm.Open(SQLite3, db.path)
 
-		if err != nil {
-			return err
-		}
-	}
-
-	db.db, err = sql.Open(SQLite3, db.path)
-
-	if err != nil {
-		return err
-	}
-
-	return db.db.Ping()
-}
-
-func (db *SQLite3Database) Create() error {
-	dbPath := db.path
-	dbDir := filepath.Dir(dbPath)
-
-	if _, err := os.Stat(dbDir); os.IsNotExist(err) {
-		if err := os.MkdirAll(dbDir, 0755); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (db *SQLite3Database) ValidateSchema() error {
-	version := -1
-
-	row := db.db.QueryRow(SchemaQuery)
-
-	if err := row.Scan(&version); err != nil {
-		return err
-	}
-
-	if version < 0 {
-		return fmt.Errorf("Invalid schema version: %d", version)
-	}
-
-	return nil
+	return err
 }
 
 func (db *SQLite3Database) Close() error {
 	return db.db.Close()
 }
 
-func (db *SQLite3Database) PopulateSchema() error {
-	bytes, err := ioutil.ReadFile("sql/schema.sql")
+func (s *SQLite3Database) UpdateUser(user *datamodel.User) error {
+	s.db.Save(user)
 
-	if err != nil {
-		return err
-	}
-
-	str := string(bytes)
-	sqlCmds := strings.Split(str, ";\r")
-
-	tx, err := db.db.Begin()
-
-	if err != nil {
-		return err
-	}
-
-	defer tx.Rollback()
-
-	for _, q := range sqlCmds {
-		_, err := tx.Exec(q)
-
-		if err != nil {
-			return err
-		}
-	}
-
-	err = tx.Commit()
-
-	return err
+	return nil
 }
 
-func (db *SQLite3Database) probeTable(table string) bool {
-	_, err := db.db.Exec(fmt.Sprintf(ProbeQuery, table))
+func (s *SQLite3Database) GetUser(username string) (*datamodel.User, error) {
+	usr := &datamodel.User{Email: username}
 
-	return err == nil
-}
-
-func (s *SQLite3Database) UpdateUser(key string, user *datamodel.User) error {
-	_, err := s.db.Exec(UpdateQuery, key, user.Email, user.Password, user.Name)
-
-	return err
-}
-
-func (s *SQLite3Database) GetUser(key string) (*datamodel.User, error) {
-	user := datamodel.User{}
-
-	rows, err := s.db.Query(SelectQuery, key)
-
-	if err != nil {
+	if err := s.db.Where(usr).First(usr).Error; err != nil {
 		return nil, err
 	}
 
-	defer rows.Close()
-
-	userCount := 0
-
-	for rows.Next() {
-		userCount++
-		if err := rows.Scan(&user.ID, &user.Email, &user.Password, &user.Name); err != nil {
-			return nil, err
-		}
-	}
-
-	if userCount == 0 {
-		return nil, nil
-	} else if userCount != 1 {
-		return nil, errors.New("Invalid number of hits returned")
-	}
-
-	return &user, nil
+	return usr, nil
 }
 
-func (s *SQLite3Database) AddUser(key string, user *datamodel.User) error {
-	_, err := s.db.Exec(InsertQuery, key, user.Email, user.Password, user.Name)
+func (s *SQLite3Database) GetPartialUser(username string) (*datamodel.User, error) {
+	usr := &datamodel.User{Email: username}
 
-	return err
+	if err := s.db.Where(usr).Select("name, password").First(usr).Error; err != nil {
+		log.Log.Warnf("Error getting partial user: %v", err)
+
+		if err == gorm.RecordNotFound {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+
+	}
+
+	return usr, nil
+}
+
+func (s *SQLite3Database) AddUser(user *datamodel.User) error {
+	s.db.Save(user)
+	return nil
 }

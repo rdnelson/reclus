@@ -5,7 +5,6 @@ import (
 
 	"github.com/rdnelson/reclus/config"
 	"github.com/rdnelson/reclus/datamodel"
-	"github.com/rdnelson/reclus/log"
 )
 
 var DatabaseProviders = make(map[string]func() (Database, error))
@@ -13,13 +12,11 @@ var DatabaseProviders = make(map[string]func() (Database, error))
 type Database interface {
 	// Database management functions
 	Open() error
-	Create() error
-	ValidateSchema() error
-	PopulateSchema() error
+	MigrateSchema() error
 	Close() error
 
 	// User Management Functions
-	datamodel.UserRepo
+	datamodel.FullRepo
 }
 
 func NewDatabase() (db Database, err error) {
@@ -39,17 +36,7 @@ func NewDatabase() (db Database, err error) {
 		return nil, err
 	}
 
-	log.Log.Debugf("Database: '%v'", db)
-
-	if err := db.ValidateSchema(); err != nil {
-		if err := db.PopulateSchema(); err != nil {
-			db.Close()
-			return nil, err
-		}
-	}
-
-	if err := db.ValidateSchema(); err != nil {
-		db.Close()
+	if err = db.MigrateSchema(); err != nil {
 		return nil, err
 	}
 
