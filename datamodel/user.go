@@ -1,11 +1,11 @@
 package datamodel
 
 type User struct {
-	ID       int
-	Username string
-	Name     string
-	Email    string `sql:"index:idx_email_password"`
-	Password string `sql:"index:idx_email_password"`
+	ID       int    `json:"id"`
+	Username string `json:"username"`
+	Name     string `json:"name"`
+	Email    string `sql:"index:idx_email_password" json:"email"`
+	Password string `sql:"index:idx_email_password" json:"-"`
 }
 
 type UserRepo interface {
