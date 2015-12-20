@@ -1,7 +1,7 @@
 package datamodel
 
 type User struct {
-	ID       int    `json:"id"`
+	ID       int    `json:"-"`
 	Username string `json:"username"`
 	Name     string `json:"name"`
 	Email    string `sql:"index:idx_email_password" json:"email"`

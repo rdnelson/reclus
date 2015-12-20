@@ -16,6 +16,7 @@ var (
 )
 
 type Config struct {
+	Logging  LoggingConfig
 	Server   ServerConfig
 	Database DBConfig
 	Security SecurityConfig
@@ -44,6 +45,10 @@ func validateConfig() error {
 	}
 
 	if err := Cfg.Security.Validate(); err != nil {
+		return err
+	}
+
+	if err := Cfg.Logging.Validate(); err != nil {
 		return err
 	}
 
