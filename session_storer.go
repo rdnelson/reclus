@@ -58,6 +58,8 @@ func (s SessionStore) Get(key string) (string, bool) {
 		return "", false
 	}
 
+	log.Log.Debugf("Found data in sessionStore for key '%s'", key)
+
 	str, ok := strInf.(string)
 
 	return str, ok
@@ -81,6 +83,8 @@ func (s SessionStore) Del(key string) {
 	if err != nil {
 		return
 	}
+
+	log.Log.Debugf("Deleting data from sessionStore for key '%s'", key)
 
 	delete(session.Values, key)
 	session.Save(s.request, s.writer)

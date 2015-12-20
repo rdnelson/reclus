@@ -6,25 +6,28 @@ import (
 
 type Route struct {
 	Name        string
-	Method      []string
+	Method      string
 	Pattern     string
-	Prefix      string
 	HandlerFunc http.Handler
 }
 
 var routes = []Route{
-	Route{
-		"Index",
-		[]string{"GET"},
-		"/",
-		"",
-		authProtect(Index, true),
-	},
-	Route{
+	Route{ // This is a special route
 		"AuthBoss",
-		[]string{"GET", "POST"},
 		"",
 		"/auth",
 		nil,
+	},
+	Route{
+		"Index",
+		"GET",
+		"/",
+		authProtect(Index, true),
+	},
+	Route{
+		"Issue",
+		"GET",
+		"/i/{id}",
+		authProtect(Issue, false),
 	},
 }

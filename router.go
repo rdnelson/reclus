@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	"github.com/justinas/nosurf"
 
@@ -37,7 +37,7 @@ func setupAuth(db backends.Database) error {
 	authManager.SessionStoreMaker = NewSessionStore
 	authManager.CookieStoreMaker = NewCookieStore
 	authManager.MountPath = "/auth"
-	authManager.RootURL = fmt.Sprintf("http://%s:%d", config.Cfg.Server.Hostname, config.Cfg.Server.Port)
+	authManager.RootURL = config.Cfg.Server.DisplayName
 	authManager.LogWriter = log.LogWriter{log.Log}
 
 	authManager.XSRFName = "csrf_token"
@@ -72,26 +72,21 @@ func NewRouter() *mux.Router {
 
 		handler = RouteLogger(handler, route.Name)
 
-		// This needs an exception because authManager needs to be initialized first
+		// This needs an exception because authManager needs to be initialized
+		// and therefore can't be put into the routing table at startup
 		if route.Name == "AuthBoss" {
 			router.
-				PathPrefix(route.Prefix).
+				PathPrefix(route.Pattern).
 				Name(route.Name).
-				Handler(authManager.NewRouter())
+				Handler(context.ClearHandler(authManager.NewRouter()))
 
 			continue
 		}
 
 		if route.Pattern != "" {
 			router.
-				Methods(route.Method...).
+				Methods(route.Method).
 				Path(route.Pattern).
-				Name(route.Name).
-				Handler(handler)
-		} else if route.Prefix != "" {
-			router.
-				Methods(route.Method...).
-				PathPrefix(route.Prefix).
 				Name(route.Name).
 				Handler(handler)
 		} else {
